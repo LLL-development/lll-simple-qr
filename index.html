@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>印 · QR Stamp — QR Code Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700;800&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+<style>
+  :root{
+    --paper:      #F3EEE2;
+    --paper-2:    #ECE5D3;
+    --ink:        #211C16;
+    --ink-soft:   #6E6659;
+    --hanko:      #B23A2E;
+    --hanko-dark: #8F2C22;
+    --indigo:     #2E3F52;
+    --line:       #D8CFB9;
+    --white:      #FFFDF8;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 800px at 15% -10%, rgba(46,63,82,0.05), transparent 60%),
+      radial-gradient(900px 700px at 110% 10%, rgba(178,58,46,0.06), transparent 55%),
+      var(--paper);
+    background-attachment: fixed;
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', 'Hiragino Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* subtle washi fiber texture */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    pointer-events:none;
+    opacity:0.5;
+    background-image:
+      repeating-linear-gradient(115deg, rgba(0,0,0,0.012) 0px, rgba(0,0,0,0.012) 1px, transparent 1px, transparent 3px),
+      repeating-linear-gradient(25deg, rgba(0,0,0,0.01) 0px, rgba(0,0,0,0.01) 1px, transparent 1px, transparent 4px);
+  }
+
+  .wrap{
+    position:relative;
+    max-width:980px;
+    margin:0 auto;
+    padding:56px 24px 80px;
+  }
+
+  header.top{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:44px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:20px;
+  }
+
+  .brand{ display:flex; align-items:center; gap:14px; }
+
+  .seal{
+    width:40px; height:40px;
+    border-radius:6px;
+    background:var(--hanko);
+    color:var(--white);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Shippori Mincho', serif;
+    font-size:19px;
+    font-weight:700;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.15) inset, 0 6px 14px rgba(178,58,46,0.25);
+    transform: rotate(-2deg);
+    flex-shrink:0;
+  }
+
+  .brand h1{
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    font-size:26px;
+    letter-spacing:0.02em;
+    margin:0;
+    line-height:1.15;
+  }
+  .brand p{
+    margin:2px 0 0;
+    font-size:12.5px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    text-align:right;
+  }
+
+  main.grid{
+    display:grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap:28px;
+    align-items:start;
+  }
+
+  @media (max-width: 860px){
+    main.grid{ grid-template-columns: 1fr; }
+  }
+
+  .card{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:32px;
+    box-shadow: 0 1px 2px rgba(33,28,22,0.04), 0 10px 30px -20px rgba(33,28,22,0.25);
+  }
+
+  .field{ margin-bottom:22px; }
+  .field label{
+    display:block;
+    font-size:12.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+  }
+
+  textarea, input[type="text"]{
+    width:100%;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-size:15px;
+    padding:12px 14px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--paper-2);
+    color:var(--ink);
+    resize:vertical;
+    min-height:44px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  textarea{ min-height:88px; line-height:1.5; }
+  textarea:focus, input[type="text"]:focus{
+    outline:none;
+    border-color:var(--indigo);
+    background:var(--white);
+  }
+
+  .row{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+  .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px; }
+  @media (max-width:520px){ .row, .row3{ grid-template-columns:1fr; } }
+
+  input[type="range"]{
+    width:100%;
+    accent-color:var(--hanko);
+  }
+  .range-value{
+    font-size:12.5px; color:var(--ink-soft); margin-top:6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  select{
+    width:100%;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-size:14.5px;
+    padding:11px 12px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--paper-2) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6"><path d="M0 0l5 6 5-6z" fill="%236E6659"/></svg>') no-repeat right 14px center;
+    color:var(--ink);
+    appearance:none;
+    -webkit-appearance:none;
+  }
+  select:focus{ outline:none; border-color:var(--indigo); }
+
+  .swatch-input{
+    display:flex; align-items:center; gap:10px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--paper-2);
+    padding:6px 10px;
+  }
+  .swatch-input input[type="color"]{
+    width:32px; height:32px;
+    border:none; border-radius:6px;
+    background:none;
+    padding:0;
+    cursor:pointer;
+  }
+  .swatch-input input[type="text"]{
+    border:none; background:none; padding:4px 0; font-size:13.5px;
+    width:100%;
+  }
+  .swatch-input input[type="text"]:focus{ outline:none; }
+
+  .divider{
+    height:1px; background:var(--line);
+    margin:28px 0;
+  }
+
+  .toggle-row{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px;
+  }
+  .toggle-row .sub{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; }
+
+  .switch{
+    position:relative; width:42px; height:24px;
+    flex-shrink:0;
+  }
+  .switch input{ opacity:0; width:0; height:0; }
+  .slider-toggle{
+    position:absolute; cursor:pointer; inset:0;
+    background:var(--line); border-radius:999px;
+    transition:.15s;
+  }
+  .slider-toggle::before{
+    content:""; position:absolute;
+    width:18px; height:18px; left:3px; top:3px;
+    background:var(--white); border-radius:50%;
+    transition:.15s;
+    box-shadow:0 1px 2px rgba(0,0,0,0.2);
+  }
+  .switch input:checked + .slider-toggle{ background:var(--indigo); }
+  .switch input:checked + .slider-toggle::before{ transform:translateX(18px); }
+
+  /* preview panel */
+  .preview-card{
+    position:sticky; top:24px;
+    text-align:center;
+  }
+
+  .preview-frame{
+    position:relative;
+    display:inline-block;
+    padding:22px;
+    background:var(--white);
+    border-radius:10px;
+    border:1px solid var(--line);
+  }
+  .preview-frame::before{
+    content:"";
+    position:absolute; inset:8px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    pointer-events:none;
+  }
+
+  #qr-holder{
+    display:flex; align-items:center; justify-content:center;
+    min-width:200px; min-height:200px;
+  }
+  #qr-holder canvas{ display:block; border-radius:2px; }
+
+  .stamp-corner{
+    position:absolute;
+    bottom:-14px; right:-14px;
+    width:44px; height:44px;
+    border-radius:6px;
+    background:var(--hanko);
+    color:var(--white);
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 8px 18px rgba(178,58,46,0.3);
+    transform: rotate(4deg);
+  }
+
+  .preview-label{
+    margin-top:22px;
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+
+  .actions{
+    margin-top:20px;
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+
+  button{
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    cursor:pointer;
+    border:none;
+    border-radius:8px;
+    font-size:14px;
+    padding:12px 20px;
+    transition: transform .1s ease, box-shadow .15s ease, background .15s ease;
+  }
+  button:active{ transform: translateY(1px); }
+
+  .btn-primary{
+    background:var(--hanko);
+    color:var(--white);
+    font-weight:600;
+    box-shadow:0 8px 18px -6px rgba(178,58,46,0.45);
+  }
+  .btn-primary:hover{ background:var(--hanko-dark); }
+
+  .btn-ghost{
+    background:transparent;
+    color:var(--indigo);
+    border:1px solid var(--line);
+  }
+  .btn-ghost:hover{ border-color:var(--indigo); }
+
+  footer{
+    text-align:center;
+    margin-top:56px;
+    font-size:12px;
+    color:var(--ink-soft);
+    letter-spacing:0.06em;
+  }
+
+  .err{
+    color:var(--hanko-dark);
+    font-size:12.5px;
+    margin-top:8px;
+    min-height:16px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="seal">印</div>
+      <div>
+        <h1>QR Stamp</h1>
+        <p>Instant QR Code Generator</p>
+      </div>
+    </div>
+    <div class="eyebrow">No upload · No tracking<br>Runs entirely in your browser</div>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+
+      <div class="field">
+        <label for="text-input">Content — URL, text, or contact info</label>
+        <textarea id="text-input" placeholder="https://example.com">https://live-laugh-love.world</textarea>
+        <div class="err" id="input-err"></div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="size-range">Size</label>
+          <input type="range" id="size-range" min="128" max="640" step="8" value="320">
+          <div class="range-value"><span id="size-value">320</span> × <span id="size-value-2">320</span> px</div>
+        </div>
+        <div class="field">
+          <label for="ec-level">Error correction</label>
+          <select id="ec-level">
+            <option value="L">L — Low (7%)</option>
+            <option value="M" selected>M — Medium (15%)</option>
+            <option value="Q">Q — Quartile (25%)</option>
+            <option value="H">H — High (30%)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="fg-color">Foreground</label>
+          <div class="swatch-input">
+            <input type="color" id="fg-color" value="#211c16">
+            <input type="text" id="fg-hex" value="#211C16">
+          </div>
+        </div>
+        <div class="field">
+          <label for="bg-color">Background</label>
+          <div class="swatch-input">
+            <input type="color" id="bg-color" value="#fffdf8">
+            <input type="text" id="bg-hex" value="#FFFDF8">
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="margin-range">Quiet zone margin</label>
+        <input type="range" id="margin-range" min="0" max="8" step="1" value="2">
+        <div class="range-value"><span id="margin-value">2</span> modules</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="toggle-row">
+        <div>
+          <div style="font-size:14px; font-weight:500;">Live preview</div>
+          <div class="sub">Regenerate automatically as you type</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="live-toggle" checked>
+          <span class="slider-toggle"></span>
+        </label>
+      </div>
+
+    </section>
+
+    <section class="card preview-card">
+      <div class="preview-frame">
+        <div id="qr-holder"></div>
+        <div class="stamp-corner">証</div>
+      </div>
+      <div class="preview-label">Scan to verify</div>
+
+      <div class="actions">
+        <button class="btn-primary" id="btn-generate">Generate</button>
+        <button class="btn-ghost" id="btn-png">Download PNG</button>
+        <button class="btn-ghost" id="btn-svg">Download SVG</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>手作り · Generated locally, nothing leaves your device</footer>
+</div>
+
+<script>
+(function(){
+  const textInput   = document.getElementById('text-input');
+  const sizeRange    = document.getElementById('size-range');
+  const sizeValue    = document.getElementById('size-value');
+  const sizeValue2   = document.getElementById('size-value-2');
+  const ecLevel      = document.getElementById('ec-level');
+  const fgColor      = document.getElementById('fg-color');
+  const bgColor      = document.getElementById('bg-color');
+  const fgHex        = document.getElementById('fg-hex');
+  const bgHex        = document.getElementById('bg-hex');
+  const marginRange  = document.getElementById('margin-range');
+  const marginValue  = document.getElementById('margin-value');
+  const liveToggle   = document.getElementById('live-toggle');
+  const qrHolder     = document.getElementById('qr-holder');
+  const inputErr     = document.getElementById('input-err');
+  const btnGenerate  = document.getElementById('btn-generate');
+  const btnPng       = document.getElementById('btn-png');
+  const btnSvg       = document.getElementById('btn-svg');
+
+  let currentCanvas = null;
+  let currentSvgString = null;
+
+  function syncColorPickers(){
+    fgColor.value = fgHex.value.startsWith('#') ? fgHex.value : '#' + fgHex.value;
+    bgColor.value = bgHex.value.startsWith('#') ? bgHex.value : '#' + bgHex.value;
+  }
+
+  function getOptions(){
+    return {
+      width: parseInt(sizeRange.value, 10),
+      margin: parseInt(marginRange.value, 10),
+      errorCorrectionLevel: ecLevel.value,
+      color: {
+        dark: fgHex.value,
+        light: bgHex.value
+      }
+    };
+  }
+
+  function render(){
+    const text = textInput.value.trim();
+    inputErr.textContent = '';
+
+    if(!text){
+      qrHolder.innerHTML = '';
+      inputErr.textContent = 'Enter some content to generate a code.';
+      currentCanvas = null;
+      currentSvgString = null;
+      return;
+    }
+
+    qrHolder.innerHTML = '';
+    const canvas = document.createElement('canvas');
+    qrHolder.appendChild(canvas);
+
+    QRCode.toCanvas(canvas, text, getOptions(), function(err){
+      if(err){
+        inputErr.textContent = 'Could not generate a code for this content.';
+        currentCanvas = null;
+        return;
+      }
+      currentCanvas = canvas;
+    });
+
+    QRCode.toString(text, Object.assign({type:'svg'}, getOptions()), function(err, svgString){
+      if(!err){ currentSvgString = svgString; }
+    });
+  }
+
+  function downloadDataUrl(dataUrl, filename){
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  // Wiring
+  sizeRange.addEventListener('input', () => {
+    sizeValue.textContent = sizeRange.value;
+    sizeValue2.textContent = sizeRange.value;
+    if(liveToggle.checked) render();
+  });
+
+  marginRange.addEventListener('input', () => {
+    marginValue.textContent = marginRange.value;
+    if(liveToggle.checked) render();
+  });
+
+  ecLevel.addEventListener('change', () => { if(liveToggle.checked) render(); });
+
+  fgColor.addEventListener('input', () => {
+    fgHex.value = fgColor.value.toUpperCase();
+    if(liveToggle.checked) render();
+  });
+  bgColor.addEventListener('input', () => {
+    bgHex.value = bgColor.value.toUpperCase();
+    if(liveToggle.checked) render();
+  });
+  fgHex.addEventListener('change', () => { syncColorPickers(); if(liveToggle.checked) render(); });
+  bgHex.addEventListener('change', () => { syncColorPickers(); if(liveToggle.checked) render(); });
+
+  textInput.addEventListener('input', () => { if(liveToggle.checked) render(); });
+
+  btnGenerate.addEventListener('click', render);
+
+  btnPng.addEventListener('click', () => {
+    if(!currentCanvas){ render(); }
+    setTimeout(() => {
+      if(!currentCanvas){ inputErr.textContent = 'Nothing to download yet.'; return; }
+      downloadDataUrl(currentCanvas.toDataURL('image/png'), 'qr-code.png');
+    }, 60);
+  });
+
+  btnSvg.addEventListener('click', () => {
+    if(!currentSvgString){ render(); }
+    setTimeout(() => {
+      if(!currentSvgString){ inputErr.textContent = 'Nothing to download yet.'; return; }
+      const blob = new Blob([currentSvgString], {type:'image/svg+xml'});
+      const url = URL.createObjectURL(blob);
+      downloadDataUrl(url, 'qr-code.svg');
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }, 60);
+  });
+
+  // initial render
+  sizeValue.textContent = sizeRange.value;
+  sizeValue2.textContent = sizeRange.value;
+  marginValue.textContent = marginRange.value;
+  render();
+})();
+</script>
+</body>
+</html>

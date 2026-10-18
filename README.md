@@ -14,4 +14,13 @@ style. Everything runs client-side — nothing is uploaded to a server.
 
 ## Tech
 
-- Single self-contained HTML file, QR generation via a vendored QRCode.js encoder
+- Static HTML page, QR generation via the locally vendored node-qrcode 1.5.3 browser encoder
+- Serve or copy `index.html` together with `vendor/`; no build or CDN is required for QR generation
+- Encoder sources, pinned rebuild instructions, and MIT licenses are in [`vendor/README.md`](vendor/README.md)
+
+## Regression check
+
+Run `node --test tests/qr.test.cjs` (Node.js 18+). This checks the actual local
+browser bundle and SVG encoding for URL and Unicode text with custom options.
+For a browser smoke check, open `index.html`, generate a code, change its settings,
+and download both PNG and SVG.
